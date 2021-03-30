@@ -13,7 +13,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-
+#include "Graph.h"
 #include "VM.h"
 
 using namespace std;
@@ -32,8 +32,8 @@ class Manager {
 	const string ipFile = "server.dat";
 	mutex fileLock;
 
-	static const size_t LOAD_IDLE_THRESHOLD_TIME_IN_SECS = 60;
-	static const size_t LOAD_OVERLOAD_THRESHOLD_TIME_IN_SECS = 30;
+	static const size_t LOAD_IDLE_THRESHOLD_TIME_IN_SECS = 15;
+	static const size_t LOAD_OVERLOAD_THRESHOLD_TIME_IN_SECS = 10;
 	static const size_t LOAD_RESET_THRESHOLD_TIME_IN_SECS = 5;
 
 	static const size_t LOAD_IDLE_THRESHOLD_PERCENT = 15;
