@@ -27,16 +27,18 @@ class VmManager : public Gtk::Window {
 	unordered_map<string, bool> terminationFlags;
 	unordered_map<string, mutex *> terminationMutexes;
 
-	mutex ipUpdateMutex;
+	mutex guiUpdateMutex;
 
 	thread *sanitiserThread;
 	mutex sanitizerMutex;
 	bool sanitizerThreadTerminationFlag;
 
 	void _fillViewsInGrid(Gtk::Grid *grid);
+	bool _fillBoxWithCPUUtil(Gtk::Box *box, const string &nameOfVM,
+						const bool update = false, const int util = -1);
 	bool _fillBoxWithIP(Gtk::Box *box, const string &nameOfVM,
-						bool update = false);
-	void _drawGraphInBox(Gtk::Box *box, const string &nameOfVm, bool clear);
+						const bool update = false);
+	void _drawGraphInBox(Gtk::Box *box, const string &nameOfVm,const bool clear);
 	void _setButtonsInBox(Gtk::Box *box, const string &nameOfVM);
 	void _powerOnImpl(const string &name, Gtk::Box *box);
 	void _shutdownImpl(const string &name);

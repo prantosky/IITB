@@ -9,8 +9,7 @@
 #include "Graph.h"
 
 VmManager::VmManager() : sanitizerThreadTerminationFlag(false) {
-	// std::cout << "VmManager::VmManager(): called" << endl;
-
+	
 	mgr = new Manager();
 	auto activeVms = mgr->attachToTheRunningVms();
 
@@ -196,6 +195,7 @@ void VmManager::_fillViewsInGrid(Gtk::Grid *grid) {
 
 		_getBoxWithWidgets(outerBox);
 		_fillBoxWithName(outerBox, name);
+		_fillBoxWithCPUUtil(outerBox,name,true);
 		_fillBoxWithIP(outerBox, name, true);
 		_setButtonsInBox(outerBox, name);
 		_fillBoxWithIP(outerBox, name);
@@ -212,6 +212,7 @@ void VmManager::_getBoxWithWidgets(Gtk::Box *box) {
 
 	auto lbl = Gtk::make_managed<Gtk::Label>();
 	auto draw = Gtk::make_managed<Graph>();
+	auto cpuUtil = Gtk::make_managed<Gtk::Label>();
 	auto ip = Gtk::make_managed<Gtk::Label>();
 	auto onButton = Gtk::make_managed<Gtk::Button>();
 	auto offButton = Gtk::make_managed<Gtk::Button>();
@@ -223,6 +224,7 @@ void VmManager::_getBoxWithWidgets(Gtk::Box *box) {
 
 	box->pack_start(*lbl, Gtk::PACK_SHRINK);
 	box->pack_start(*draw);
+	box->pack_start(*cpuUtil, Gtk::PACK_SHRINK);
 	box->pack_start(*ip, Gtk::PACK_SHRINK);
 	box->pack_start(*onButton, Gtk::PACK_SHRINK);
 	box->pack_start(*offButton, Gtk::PACK_SHRINK);
@@ -244,10 +246,37 @@ void VmManager::_fillBoxWithName(Gtk::Box *box, const string &nameOfVM) {
 	// cout << "VmManager::_fillBoxWithName exited for " << nameOfVM << endl;
 }
 
+bool VmManager::_fillBoxWithCPUUtil(Gtk::Box *box, const string &nameOfVM,
+							   const bool update, const int util) {
+	bool flag = false;
+	string utilMsg;
+	if (util >= 0 and util <= 100) {
+		utilMsg = to_string(util) + "%";
+	} else {
+		utilMsg = "--";
+	}
+
+	auto children = box->get_children();
+	Gtk::Widget *name = children.at(2);
+	if (GTK_IS_LABEL(name->gobj())) {
+		auto label = dynamic_cast<Gtk::Label *>(name);
+		if (update or flag) {
+			lock_guard lck(guiUpdateMutex);
+			label->set_text("CPU Util : " + utilMsg);
+		}
+	} else {
+		std::cerr << "VmManager::__fillBoxWithCPUUtil: label not found as "
+					 "third element "
+					 "of the box"
+				  << std::endl;
+	}
+	return flag;
+}
+
+
 bool VmManager::_fillBoxWithIP(Gtk::Box *box, const string &nameOfVM,
 							   bool update) {
 	bool flag = false;
-	// cout << "VmManager::_fillBoxWithIP called for " << nameOfVM << endl;
 	string ip;
 	if (mgr->isVmPowered(nameOfVM)) {
 		ip = mgr->getIP(nameOfVM);
@@ -262,20 +291,19 @@ bool VmManager::_fillBoxWithIP(Gtk::Box *box, const string &nameOfVM,
 	}
 
 	auto children = box->get_children();
-	Gtk::Widget *name = children.at(2);
+	Gtk::Widget *name = children.at(3);
 	if (GTK_IS_LABEL(name->gobj())) {
 		auto label = dynamic_cast<Gtk::Label *>(name);
 		if (update or flag) {
-			lock_guard lck(ipUpdateMutex);
+			lock_guard lck(guiUpdateMutex);
 			label->set_text("IP: " + ip);
 		}
 	} else {
 		std::cerr << "VmManager::__fillBoxWithIP: label not found as "
-					 "third element "
+					 "fourth element "
 					 "of the box"
 				  << std::endl;
 	}
-	// cout << "VmManager::_fillBoxWithIP exited " << nameOfVM << endl;
 	return flag;
 }
 
@@ -329,8 +357,8 @@ void VmManager::_launchVmThreads(Gtk::Box *box, const string &name) {
 void VmManager::_setButtonsInBox(Gtk::Box *box, const string &nameOfVM) {
 	// cout << "VmManager::_setButtonsInBox called" << endl;
 	auto children = box->get_children();
-	Gtk::Widget *startButton = children.at(3);
-	Gtk::Widget *shutButton = children.at(4);
+	Gtk::Widget *startButton = children.at(4);
+	Gtk::Widget *shutButton = children.at(5);
 	if (GTK_IS_BUTTON(startButton->gobj()) and
 		GTK_IS_BUTTON(shutButton->gobj())) {
 		auto start = dynamic_cast<Gtk::Button *>(startButton);
@@ -378,6 +406,10 @@ void VmManager::_drawGraphInBox(Gtk::Box *box, const string &nameOfVm,
 					 "third element "
 					 "of the box"
 				  << std::endl;
+	}
+	auto it = vec.rbegin();
+	if(it!=vec.rend()){
+		_fillBoxWithCPUUtil(box, nameOfVm, true, *it);
 	}
 	// cout << "VmManager::_drawGraphInBox exited " << nameOfVm << endl;
 }
