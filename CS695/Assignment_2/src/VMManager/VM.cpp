@@ -10,7 +10,7 @@
 
 using namespace std;
 
-// Constructor to create a VM object and start a VM with the given name.
+// Constructor to create a VM object.
 VM::VM(const virConnectPtr &connPtr, const string &name) {
 	if (connPtr == NULL) throw invalid_argument("Invalid connection object\n");
 	vector<string> names = getAllDefinedDomainNames(connPtr);
@@ -24,7 +24,7 @@ VM::VM(const virConnectPtr &connPtr, const string &name) {
 	}
 }
 
-// Constructor to create a VM object and start any random vm.
+// Constructor to create a VM object for any arbitary inactive VM.
 VM::VM(const virConnectPtr &conn) {
 	if (conn == NULL) throw invalid_argument("Invalid connection object\n");
 	vector<string> inactiveDomains = getInactiveDomainNames(conn);
@@ -143,11 +143,14 @@ unordered_map<string, string> VM::_getStatsforDomain(
 	} else {
 		next = records;
 		while (*next) {
-			testMap = _getDomainStatRecordMap(*next);
-			if (!testMap.empty() and
-				testMap.at("domain.name") == string(virDomainGetName(domPtr))) {
-				currMap = testMap;
-				break;
+			string currVmName = string(virDomainGetName((*next)->dom));
+			if(currVmName==getName()){
+				testMap = _getDomainStatRecordMap(*next);
+				if (not testMap.empty() and
+					testMap.at("domain.name") == getName()) {
+					currMap = testMap;
+					break;
+				}
 			}
 			if (*(++next))
 				;
@@ -239,7 +242,7 @@ tuple<long, double> VM::getVmCpuUtil(const virConnectPtr &conn) {
 	string domain_name = getName();
 	auto prev_map = _getStatsforDomain(conn);
 	double time_prev = _convertStatMapToUtil(prev_map);
-	this_thread::sleep_for(chrono::milliseconds(1000));
+	this_thread::sleep_for(chrono::seconds(1));
 	auto curr_map = _getStatsforDomain(conn);
 	double time_curr = _convertStatMapToUtil(curr_map);
 	double avg_util = 100 * (time_curr - time_prev) / (1000 * 1000 * 1000);
@@ -272,6 +275,7 @@ unordered_map<string, vector<string>> VM::getInterfaceInfo() {
 		map.emplace(hwaddr, naddrs);
 		virDomainInterfaceFree(ifaces[i]);
 	}
+	free(ifaces);
 	return map;
 }
 
@@ -351,7 +355,6 @@ vector<string> VM::getInactiveDomainNames(const virConnectPtr &conn) {
 		}
 		virDomainFree(domains[i]);
 	}
-	// free(domains);
 	return vec;
 }
 
@@ -376,7 +379,6 @@ vector<string> VM::getAllDefinedDomainNames(const virConnectPtr &conn) {
 		}
 		virDomainFree(domains[i]);
 	}
-	// free(domains);
 	return vec;
 }
 
@@ -402,6 +404,5 @@ vector<string> VM::getAllActiveDomainNames(const virConnectPtr &conn) {
 		}
 		virDomainFree(domains[i]);
 	}
-	// free(domains);
 	return vec;
 }

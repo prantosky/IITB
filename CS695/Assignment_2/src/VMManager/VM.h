@@ -6,7 +6,7 @@
 #define ASSIGNMENT_2_VM_H
 
 #include <libvirt/libvirt.h>
-
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -16,13 +16,13 @@ class VM {
    private:
 	virDomainPtr domPtr;
 
-	// Inline private member functions
+	// Inline static member functions
 	static inline unordered_map<string, string> _getDomainStatRecordMap(
 		const virDomainStatsRecordPtr& record);
 	static inline string _getTypedParamValue(const virTypedParameterPtr& item);
-	static double _convertStatMapToUtil(
+	static inline double _convertStatMapToUtil(
 		const unordered_map<string, string>& map);
-	static long _getVmStateFromMap(const unordered_map<string, string>& map);
+	static inline long _getVmStateFromMap(const unordered_map<string, string>& map);
 
 	// private member functions
 	unordered_map<string, string> _getStatsforDomain(const virConnectPtr& conn);
