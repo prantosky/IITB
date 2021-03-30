@@ -6,13 +6,8 @@
 
 #include <fcntl.h>
 
-#include <cstdio>
 #include <fstream>
-#include <functional>
-#include <stack>
-#include <thread>
 #include <utility>
-#include <vector>
 
 Manager::Manager() : loadHandlerTerminationFlag(false) {
 	conn = virConnectOpen("qemu:///system");
@@ -311,7 +306,7 @@ void Manager::_watch(string nameOfVm) {
 					// cout << "Manager:_watch: Pushing back to " << nameOfVm
 					// 	 << " list." << endl;
 					lst->push_back(util);
-					if (lst->size() > 40) {
+					if (lst->size() > Graph::MAX_TICKS_ON_GRAPH) {
 						lst->erase(lst->begin());
 					}
 				}
