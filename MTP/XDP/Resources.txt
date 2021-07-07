@@ -1,0 +1,24 @@
+long bpf_redirect_map(struct bpf_map *map, u32 key, u64 flags)
+
+              Description
+                     Redirect the packet to the endpoint referenced by
+                     map at index key. Depending on its type, this map
+                     can contain references to net devices (for
+                     forwarding packets through other ports), or to CPUs
+                     (for redirecting XDP frames to another CPU; but
+                     this is only implemented for native XDP (with
+                     driver support) as of this writing).
+
+                     The lower two bits of flags are used as the return
+                     code if the map lookup fails. This is so that the
+                     return value can be one of the XDP program return
+                     codes up to XDP_TX, as chosen by the caller. Any
+                     higher bits in the flags argument must be unset.
+
+                     See also bpf_redirect(), which only supports
+                     redirecting to an ifindex, but doesn't require a
+                     map to do so.
+
+              Return XDP_REDIRECT on success, or the value of the two
+                     lower bits of the flags argument on error.
+
